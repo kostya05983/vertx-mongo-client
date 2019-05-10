@@ -309,10 +309,14 @@ public class MongoClientImpl implements io.vertx.ext.mongo.MongoClient {
 
     Bson bquery = wrap(encodedQuery);
     Bson bfields = wrap(fields);
-    getCollection(collection).find(bquery).projection(bfields).first(convertCallback(resultHandler, object -> {
-      if (object == null) return null;
-      return decodeKeyWhenUseObjectId(object);
-    }));
+    try {
+      getCollection(collection).find(bquery).projection(bfields).first(convertCallback(resultHandler, object -> {
+        if (object == null) return null;
+        return decodeKeyWhenUseObjectId(object);
+      }));
+    } catch(Exception e) {
+      log.error(e);
+    }
     return this;
   }
 

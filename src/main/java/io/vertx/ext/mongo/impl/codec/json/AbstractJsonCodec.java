@@ -26,7 +26,11 @@ public abstract class AbstractJsonCodec<O, A> implements Codec<O> {
 
   @Override
   public void encode(BsonWriter writer, O value, EncoderContext encoderContext) {
-    writeDocument(writer, null, value, encoderContext);
+    try {
+      writeDocument(writer, null, value, encoderContext);
+    } catch(IllegalArgumentException e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   protected Object readValue(BsonReader reader, DecoderContext ctx) {
@@ -245,7 +249,7 @@ public abstract class AbstractJsonCodec<O, A> implements Codec<O> {
     return object;
   }
 
-  protected void writeDocument(BsonWriter writer, String name, Object value, EncoderContext ctx) {
+  protected void writeDocument(BsonWriter writer, String name, Object value, EncoderContext ctx) throws IllegalStateException {
     @SuppressWarnings("unchecked")
     O object = (O) value;
 

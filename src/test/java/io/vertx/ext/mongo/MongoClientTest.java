@@ -77,6 +77,25 @@ public class MongoClientTest extends MongoClientTestBase {
     });
   }
 
+
+  @Test
+  public void testFindOneWithInvalidKey() throws Exception {
+    String collection = randomCollection();
+    final CountDownLatch latch = new CountDownLatch(1);
+    mongoClient.createCollection(collection, onSuccess(res -> {
+      JsonObject orig = createDoc();
+      JsonObject doc = orig.copy();
+      mongoClient.findOne(collection, new JsonObject().put("_id", new JsonObject()
+        .put("$oid", "invalid")), new JsonObject(), r-> {
+        if (r.failed()) {
+          latch.countDown();
+          System.out.println("Failed");
+        }
+      });
+    }));
+    awaitLatch(latch);
+  }
+
   @Test
   public void testFindBatchFetch() throws Exception {
     testFindBatch((latch, stream) -> {

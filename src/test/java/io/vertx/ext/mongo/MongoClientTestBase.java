@@ -667,6 +667,17 @@ public abstract class MongoClientTestBase extends MongoTestBase {
   }
 
   @Test
+  public void testFindOneCollection() throws Exception{
+    String collection = randomCollection();
+    mongoClient.createCollection(collection, onSuccess(res -> {
+      JsonObject doc = createDoc();
+      mongoClient.insert(collection, doc, onSuccess(id -> {
+        assertNotNull(id);
+      }));
+    }));
+  }
+
+  @Test
   public void testCountNoCollection() {
     String collection = randomCollection();
     mongoClient.count(collection, new JsonObject(), onSuccess(count -> {

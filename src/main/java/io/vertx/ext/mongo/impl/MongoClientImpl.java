@@ -67,9 +67,7 @@ import io.vertx.ext.mongo.UpdateOptions;
 import io.vertx.ext.mongo.WriteOption;
 import io.vertx.ext.mongo.impl.codec.json.JsonObjectCodec;
 import io.vertx.ext.mongo.impl.config.MongoClientOptionsParser;
-import org.bson.BsonDocument;
-import org.bson.BsonDocumentReader;
-import org.bson.BsonValue;
+import org.bson.*;
 import org.bson.codecs.DecoderContext;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
@@ -397,6 +395,12 @@ public class MongoClientImpl implements io.vertx.ext.mongo.MongoClient {
     MongoCollection<JsonObject> coll = getCollection(collection);
     coll.findOneAndDelete(bquery, foadOptions, wrapCallback(resultHandler));
     return this;
+  }
+
+
+  public  FindIterable<JsonObject> findIterable(String collection) {
+    requireNonNull(collection);
+    return getCollection(collection).find();
   }
 
   @Override

@@ -7,13 +7,15 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.streams.ReadStream;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
@@ -180,6 +182,37 @@ public class MongoClientTest extends MongoClientTestBase {
     }));
     awaitLatch(latch);
     assertEquals(111, count.longValue());
+  }
+
+  @Test
+  public void testBulkOperation_multiReplaces() {
+    String collection = randomCollection();
+    insertDocs(mongoClient, collection, 1, onSuccess(v -> {
+
+      JsonObject filter1 = new JsonObject().put("num", 123);
+      JsonObject replace1 = new JsonObject().put("foo", "replaced");
+      BulkOperation bulkReplace1 = BulkOperation.createReplace(filter1, replace1);
+
+      JsonObject filter2 = new JsonObject().put("num1", 456);
+      JsonObject replace2 = new JsonObject().put("foo1", "bar");
+      BulkOperation bulkReplace2 = BulkOperation.createReplace(filter2, replace2);
+
+      mongoClient.bulkWrite(collection, Arrays.asList(bulkReplace1, bulkReplace2), onSuccess(bulkResult -> {
+        assertEquals(0, bulkResult.getInsertedCount());
+        assertEquals(2, bulkResult.getModifiedCount());
+        assertEquals(0, bulkResult.getDeletedCount());
+        assertEquals(2, bulkResult.getMatchedCount());
+        assertEquals(0, bulkResult.getUpserts().size());
+        mongoClient.find(collection, new JsonObject(), onSuccess(docs -> {
+          assertEquals(1, docs.size());
+          JsonObject foundDoc = docs.get(0);
+          assertEquals("replaced", foundDoc.getString("foo"));
+          assertNull(foundDoc.getInteger("num"));
+          testComplete();
+        }));
+      }));
+    }));
+    await();
   }
 
   private void upsertDoc(String collection, JsonObject docToInsert, String expectedId, Consumer<JsonObject> doneFunction) {
